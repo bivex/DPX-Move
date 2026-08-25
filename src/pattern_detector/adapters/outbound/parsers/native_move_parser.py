@@ -43,17 +43,18 @@ def _split_top_level_commas(s: str) -> list[str]:
 class NativeMoveParserAdapter(ParserPort):
     """Single-pass robust parser extracting Move modules, structs, abilities, functions, and specs."""
 
+    # Supports both `module pkg::name;` (Move 2024) and `module pkg::name {` (Classic)
     MODULE_DECL_PATTERN = re.compile(
-        r"^\s*module\s+(?:(?P<pkg>[a-zA-Z0-9_]+)::)?(?P<name>[a-zA-Z0-9_]+)\s*\{"
+        r"^\s*module\s+(?:(?P<pkg>[a-zA-Z0-9_]+)::)?(?P<name>[a-zA-Z0-9_]+)\s*(?:\{|;)"
     )
     USE_DECL_PATTERN = re.compile(
-        r"^\s*use\s+(?P<path>[a-zA-Z0-9_:]+)(?:\s+as\s+(?P<alias>[a-zA-Z0-9_]+))?\s*;"
+        r"^\s*(?:public\s+)?use\s+(?P<path>[a-zA-Z0-9_:]+)(?:\s+as\s+(?P<alias>[a-zA-Z0-9_.]+))?\s*;"
     )
     FRIEND_DECL_PATTERN = re.compile(
         r"^\s*friend\s+(?P<path>[a-zA-Z0-9_:]+)\s*;"
     )
     CONST_DECL_PATTERN = re.compile(
-        r"^\s*const\s+(?P<name>[a-zA-Z0-9_]+)\s*:\s*(?P<type>[a-zA-Z0-9_]+)\s*=\s*(?P<val>[^;]+)\s*;"
+        r"^\s*const\s+(?P<name>[a-zA-Z0-9_]+)\s*:\s*(?P<type>[a-zA-Z0-9_<>]+)\s*=\s*(?P<val>[^;]+)\s*;"
     )
     STRUCT_HEADER_PATTERN = re.compile(
         r"^\s*(?:public\s+)?struct\s+(?P<name>[a-zA-Z0-9_]+)(?:<(?P<generics>[^>]+)>)?(?:\s+has\s+(?P<abilities>[a-zA-Z0-9_,\s]+))?\s*(?:\{|\;|\(?)"
@@ -133,7 +134,11 @@ class NativeMoveParserAdapter(ParserPort):
                     c_name = const_m.group("name")
                     c_type = const_m.group("type")
                     c_val = const_m.group("val").strip()
-                    is_err = c_name.startswith("E_") or c_name.startswith("ERR_") or "ERROR" in c_name
+                    is_err = (
+                        c_name.startswith("E")
+                        or c_name.startswith("ERR_")
+                        or "ERROR" in c_name
+                    )
                     current_module.constants.append(
                         MoveConstant(
                             name=c_name,
