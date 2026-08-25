@@ -1,0 +1,8 @@
+[package]
+name = "DefiPool"
+version = "0.1.0"
+authors = ["Bivex <dev@bivex.io>"]
+
+[addresses]
+defi_pool = "0x42"
+sui = "0x2"

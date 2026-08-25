@@ -1,0 +1,179 @@
+# 📦 DPX-Move: Resource-Oriented Programming, Sui Objects, Aptos Storage, Abilities & GoF 23 Static Analyzer
+
+<div align="center">
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Move Version](https://img.shields.io/badge/Move-2024%20%7C%20Aptos%20%7C%20Sui%20%7C%20Initia-00e5ff?logo=blockchain-dot-com&logoColor=white)](https://move-language.github.io/move/)
+[![Python: 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://python.org)
+[![Architecture: Hexagonal DDD](https://img.shields.io/badge/Architecture-Hexagonal%20DDD-blueviolet)](https://alistair.cockburn.us/hexagonal-architecture/)
+[![CLI: Typer & Rich](https://img.shields.io/badge/CLI-Typer%20%26%20Rich-009688)](https://typer.tiangolo.com)
+[![SARIF OASIS v2.1.0](https://img.shields.io/badge/SARIF-OASIS%20v2.1.0-blue)](https://sarifweb.azurewebsites.net)
+
+**DPX-Move** is an enterprise-grade static analysis engine and architectural pattern detector for Move smart contracts across **Aptos, Sui, Initia, Movement, and Starcoin** ecosystems. Engineered for **Resource-Oriented Programming, Linear Types, Struct Ability Combinations (`key`, `store`, `copy`, `drop`), Hot Potato Receipts, One-Time Witness (OTW), Capability Access Control, Sui Object-Centric Storage (`id: UID`), Aptos Global Storage (`move_to`, `borrow_global`), Dynamic Fields, Move Prover Formal Verification Specs, all 23 GoF Design Patterns**, and **Smart Contract Security Hazards (Unprotected Mutation, Arbitrary Drain, Missing Aborts, Vector Overflow DoS)**.
+
+[Features](#-key-features) • [Installation](#-installation) • [CLI Usage](#-cli-usage) • [Supported Rules](#-supported-pattern-rules--checks) • [The DPX Suite Family](#-the-dpx-suite-family)
+
+</div>
+
+---
+
+## 🌟 Key Features
+
+- 💎 **Resource-Oriented Linear Types:** Enforces Move VM linear type safety for non-drop/non-copy resource structs (`has key`).
+- ⚡ **Hot Potato & One-Time Witness (OTW):** Audits zero-ability structs (`Hot Potato`) enforcing atomic same-transaction settlement (Flashloans) and single-use OTW drop structs.
+- 🔑 **Capability-Based Access Control:** Replaces fragile address checks with typed capability structs (`AdminCap`, `TreasuryCap`).
+- 🌊 **Sui Object & Aptos Storage Paradigms:** Analyzes Sui unique UID objects (`transfer::share_object`, `dynamic_field::add`) and Aptos global storage (`move_to`, `borrow_global_mut`).
+- 📐 **Move Prover Formal Verification Specs:** Parses and verifies mathematical formal verification specs (`spec module`, `spec fun`, `ensures`, `aborts_if`, `invariant`).
+- 🏛️ **100% Complete Gang of Four (GoF 23/23):** Full coverage of all 23 Creational, Structural, and Behavioral design patterns tailored for Move resources, phantom types, and capability tokens.
+- 🛡️ **Move Security Hazards:** Detects unprotected resource mutations (`&mut Resource` without capability checks), arbitrary coin drains, missing abort assertions, and unbounded vector DoS.
+- 📊 **Interactive Architecture Observability HUD:** Zero-dependency interactive HTML dashboard with instant search, KPI breakdown, and built-in **`🤖 Copy AI Context Prompt`** generator for LLMs (Claude, GPT-4, Gemini).
+- 🔒 **CI/CD & GitHub Security Ready:** Standardized **OASIS SARIF v2.1.0**, JSON, and Markdown reports.
+
+---
+
+## 📦 Installation
+
+```bash
+# Clone repository
+git clone https://github.com/bivex/DPX-Move.git
+cd DPX-Move
+
+# Install dependencies using uv or pip
+uv venv
+source .venv/bin/activate
+uv pip install -e ".[dev]"
+```
+
+---
+
+## 💻 CLI Usage
+
+### 1. Scan a Move Smart Contract Package
+```bash
+# Terminal scan with Rich formatting
+dpx-move scan /path/to/move/package
+
+# Export Interactive HTML Observability HUD
+dpx-move scan sources/ -H reports/move_hud.html
+
+# Generate AI Context Prompt for LLMs
+dpx-move scan sources/ --llm
+
+# Filter for specific Resource or Hot Potato rules
+dpx-move scan sources/ -p resource_linear_type_safety -p hot_potato_transient_receipt
+
+# Export SARIF for GitHub Code Scanning
+dpx-move scan sources/ -S reports/results.sarif
+```
+
+### 2. Inspect Supported Architectural Rules
+```bash
+dpx-move rules
+```
+
+### 3. Query Deep Pattern Documentation
+```bash
+dpx-move info resource_linear_type_safety
+dpx-move info hot_potato_transient_receipt
+```
+
+---
+
+## 📋 Supported Pattern Rules & Checks
+
+### 1. 💎 Move Idiomatic, Linear Types & Abilities
+- `resource_linear_type_safety`: Linear types enforced by Move VM: structs with `key` and without `drop` preventing double-spend and resource destruction.
+- `struct_ability_composition`: Explicit ability combinations (`has key, store, copy, drop`) defining resource lifecycle and storage semantics.
+- `witness_type_authorization`: One-Time Witness (OTW) pattern consuming single-use drop structs during module initialization.
+- `hot_potato_transient_receipt`: Struct without any abilities (no key, store, copy, drop) forcing same-transaction repayment (Flashloans).
+- `capability_access_control`: Access control by passing an explicit capability reference (`&AdminCap`) instead of fragile address checks.
+- `friend_module_visibility`: Scoping internal package functions with `public(friend)` or `public(package)` to prevent external invocation.
+
+### 2. 🌊 Aptos vs. Sui Move Object & Table Models
+- `sui_object_centric_data_model`: Object model with unique UID fields (`id: UID`) transferred via `transfer::transfer` or `transfer::share_object`.
+- `aptos_account_resource_storage`: Global storage operations under account addresses: `move_to`, `borrow_global`, `borrow_global_mut`, `exists`.
+- `dynamic_field_extension`: Extending object schemas at runtime using `dynamic_field::add` or `Table`/`SmartTable` collections.
+- `module_initializer_singleton`: Module one-shot bootstrapper (`init` in Sui / `init_module` in Aptos) executing exactly once upon publishing.
+
+### 3. 📐 Move Prover & Formal Verification
+- `move_prover_formal_spec`: Formal mathematical proof specifications (`spec module`, `spec fun`, `ensures`, `aborts_if`, `invariant`).
+- `abort_code_domain_enums`: Explicit error constant declarations (`const E_NOT_AUTHORIZED: u64 = 1; assert!(..., E_...);`).
+- `invariant_state_assertion`: Post-condition and invariant assertions guaranteeing state validity across execution branches.
+
+### 4. 🏛️ GoF Creational Patterns (5/5)
+- `singleton_capability_vault`: Singleton pattern issuing a single, non-copyable capability struct during module initialization.
+- `factory_resource_mint_constructor`: Factory pattern packing and constructing new resource instances from raw arguments.
+- `abstract_factory_pool_creator`: Abstract factory creating generic liquidity pools and market vaults parameterized by coin types (`create_pool<CoinA, CoinB>`).
+- `builder_multisig_proposal`: Builder pattern incrementally constructing a proposal or batch transaction before execution.
+- `prototype_resource_clone_split`: Prototype pattern creating new resource portions via balance splitting (`coin::split` / `coin::join`).
+
+### 5. 🧱 GoF Structural Patterns (7/7)
+- `adapter_oracle_wrapper`: Adapter pattern transforming Pyth/Chainlink/Switchboard oracle feeds into uniform price structs.
+- `bridge_cross_chain_portal`: Decoupling cross-chain communication abstractions from specific relayer or validator bridges.
+- `composite_bundle_bag`: Composite pattern aggregating heterogeneous resource types using `sui::bag` or `Table` collections.
+- `decorator_yield_vault_booster`: Decorator pattern wrapping base staking deposits with reward multiplier metadata.
+- `facade_router_aggregator`: Unified entrypoint facade abstracting multi-hop routing across individual AMM pools.
+- `flyweight_type_tag_registry`: Using phantom type parameters (`struct Pool<phantom CoinA>`) eliminating runtime metadata storage.
+- `proxy_delegate_forwarder`: Proxy pattern delegating execution rights from owner capabilities to authorized operator roles.
+
+### 6. 🎯 GoF Behavioral Patterns (11/11)
+- `chain_of_responsibility_validation_pipeline`: Passing transaction requests through sequenced validation rule checks.
+- `command_executable_action`: Encapsulating executable actions into payload structs passed to governance executors.
+- `interpreter_bytecode_evaluator`: Evaluating on-chain DSL or state machine transition instructions from byte buffers.
+- `iterator_cursor_vector_scan`: Cursor-based bounded iteration over vector elements (`vector::borrow`, `vector::length`).
+- `mediator_escrow_atomic_swap`: Central escrow module mediating atomic token exchanges between distrusting counterparties.
+- `memento_checkpoint_snapshot`: Recording historical balance or epoch checkpoints for governance and reward distributions.
+- `observer_event_emission`: Observer pattern broadcasting typed event structs (`event::emit`) for off-chain indexers.
+- `state_machine_vault_lifecycle`: Finite State Machine enforcing protocol states (Pending, Active, Paused, Settled).
+- `strategy_yield_harvest_injection`: Strategy pattern injecting interchangeable yield/rebalance algorithms into vaults.
+- `template_method_hook_lifecycle`: Fixed execution skeleton coordinating entrypoints with pre/post execution hooks.
+- `visitor_hook_receiver`: Callback receiver invoked by flashloan or lending pools during borrow transactions.
+
+### 7. 🛡️ Move Security Hazards
+- `unprotected_resource_mutation_hazard`: Public entry function taking mutable reference (`&mut Resource`) without capability or signer verification.
+- `arbitrary_coin_drain_hazard`: Public entry function transferring or minting coins without recipient or sender authorization checks.
+- `missing_abort_assertion_hazard`: Branching logic executing critical state updates without `assert!` verification.
+- `vector_overflow_dos_hazard`: Unbounded loop over dynamic vector risking transaction gas limit exhaustion.
+
+### 8. 📐 SOLID Principles & Smells
+- `monolithic_module_srp`: Module declaring excessive structs (>= 8) or functions (>= 15), violating Single Responsibility.
+- `fat_resource_interface_isp`: Struct declaring excessive fields (>= 10), violating Interface Segregation.
+- `hardcoded_address_ocp`: Hardcoding literal hex addresses (`@0x...`) instead of named package addresses.
+
+---
+
+## 🌐 The DPX Suite Family
+
+Cross-language architectural static analysis across all modern programming languages:
+
+| Repository | Language / Ecosystem | Primary Paradigms & Focus |
+|---|---|---|
+| **[`DPX-Move`](https://github.com/bivex/DPX-Move)** | **Move** (Move 2024 / Aptos / Sui) | **Linear Resources, Abilities, Sui Objects, Hot Potato, Prover, GoF 23** |
+| **[`DPX-Lua`](https://github.com/bivex/DPX-Lua)** | **Lua / Luau** (5.1 - 5.4 / LuaJIT) | **Metatable OOP, Coroutines, LuaJIT FFI, GameDev (Roblox/Neovim), GoF 23** |
+| **[`DPX-Solidity`](https://github.com/bivex/DPX-Solidity)** | **Solidity** (0.8.x - 0.8.28+) | **EVM Gas Optimization, Proxies, CEI Reentrancy, Yul, GoF 23, Security** |
+| **[`DPX-Zig`](https://github.com/bivex/DPX-Zig)** | **Zig** (0.11 - 0.14+) | **Comptime Generics, Allocator RAII, Defer Cleanup, SIMD, GoF 23** |
+| **[`DPX-Gleam`](https://github.com/bivex/DPX-Gleam)** | **Gleam** (1.0 - 1.8+) | **Type-Safe OTP Actors, Algebraic Data Types, Railway Monads, GoF 23** |
+| **[`DPX-Mojo`](https://github.com/bivex/DPX-Mojo)** | **Mojo** (24.x - 25.x+) | **SIMD Vectorization, Ownership, Memory Safety, GoF 23, AI Acceleration** |
+| **[`DPX-Julia`](https://github.com/bivex/DPX-Julia)** | **Julia** (1.6 - 1.11+) | **Multiple Dispatch, Holy Traits, Metaprogramming, Tasks, GoF 23** |
+| **[`DPX-Kotlin`](https://github.com/bivex/DPX-Kotlin)** | **Kotlin** (1.8 - 2.0+) | **Coroutines, Flow, Jetpack Compose, Multiplatform, GoF 23** |
+| **[`DPX-Swift`](https://github.com/bivex/DPX-Swift)** | **Swift** (5.5 - 6.0+) | **Protocol-Oriented, Actor Concurrency, SwiftUI, ARC Safety** |
+| **[`DPX-CSharp`](https://github.com/bivex/DPX-CSharp)** | **C#** (10 - 13 / .NET 8-9) | **Clean Architecture, CQRS MediatR, Channel Pipelines** |
+| **[`DPX-TypeScript`](https://github.com/bivex/DPX-TypeScript)** | **TypeScript / JavaScript** | **Hexagonal DI, Decorator Meta, Reactive Streams, React/NestJS** |
+| **[`DPX-Rust`](https://github.com/bivex/DPX-Rust)** | **Rust** (Edition 2021/2024) | **Zero-Cost Abstractions, RAII Lifetimes, Typestate Pattern** |
+| **[`DPX-Go`](https://github.com/bivex/DPX-Go)** | **Go** (1.18 - 1.24+) | **Goroutine Channels, CSP Concurrency, Pipeline Streaming** |
+| **[`DPX-Py`](https://github.com/bivex/DPX-Py)** | **Python** (3.8 - 3.13+) | **Multi-Paradigm Hexagonal, Data Flow Engine, AsyncIO** |
+| **[`DPX-Php`](https://github.com/bivex/DPX-Php)** | **PHP** (8.1 - 8.4+) | **Attribute-driven DDD, Fiber Concurrency, Laravel/Symfony** |
+| **[`DPX-Haskell`](https://github.com/bivex/DPX-Haskell)** | **Haskell** (GHC 9.2 - 9.12+) | **Category Theory, Monad Transformers, Free Monads, Optics** |
+| **[`DPX-OCaml`](https://github.com/bivex/DPX-OCaml)** | **OCaml** (4.14 - 5.3+ Multicore) | **Functor Modules, Effect Handlers, GADTs, Railway Monads** |
+| **[`DPX-Elixir`](https://github.com/bivex/DPX-Elixir)** | **Elixir** (OTP 25 - 27+) | **GenServer, DynamicSupervisor, Actor Fault Tolerance** |
+| **[`DPX-Erlang`](https://github.com/bivex/DPX-Erlang)** | **Erlang/OTP** (24 - 27+) | **OTP Behaviors, Supervision Trees, Message Passing** |
+| **[`DPX-C`](https://github.com/bivex/DPX-C)** | **C** (C99 - C23) | **Opaque Structs, VTables, MISRA/CERT Safety, Arena Allocators** |
+| **[`DPX-Cpp`](https://github.com/bivex/DPX-Cpp)** | **C++** (C++14 - C++20) | **CRTP, Policy-Based Design, RAII Memory Safety, ANTLR4 AST** |
+| **[`DPX-Java`](https://github.com/bivex/DPX-Java)** | **Java** (17 - 23+) | **Virtual Threads, Spring Boot / Jakarta EE, GoF Patterns** |
+| **[`DPX`](https://github.com/bivex/DPX)** | **Clojure** / Meta Engine | **Pure Functional, Multimethods, Homoiconic Macro Architecture** |
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
